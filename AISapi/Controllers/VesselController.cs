@@ -1,8 +1,6 @@
-﻿using AISapi.BA;
-using AISapi.BA.Interfaces;
+﻿using AISapi.BA.Interfaces;
 using AISapi.Models;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
 
 namespace AISapi.Controllers;
 
@@ -17,7 +15,7 @@ public class VesselController : ControllerBase
         _vesselBA = vesselBA;
     }
 
-    [HttpGet(Name = "GetVesselData")]
+    [HttpGet]
     public async Task<IActionResult> Get()
     {
         (List<Vessel> vessels, string error) = await _vesselBA.GetVesselsAsync();
