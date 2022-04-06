@@ -5,6 +5,8 @@ VisualStudioVersion = 25.0.1700.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISapi", "AISapi\AISapi.csproj", "{20F0E412-88EA-41E8-AD95-0D121F551B63}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISTests", "AISTests\AISTests.csproj", "{22E10D3E-C335-4E5B-B264-BBF11794D1B3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{20F0E412-88EA-41E8-AD95-0D121F551B63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20F0E412-88EA-41E8-AD95-0D121F551B63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20F0E412-88EA-41E8-AD95-0D121F551B63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22E10D3E-C335-4E5B-B264-BBF11794D1B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22E10D3E-C335-4E5B-B264-BBF11794D1B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22E10D3E-C335-4E5B-B264-BBF11794D1B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22E10D3E-C335-4E5B-B264-BBF11794D1B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

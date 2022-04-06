@@ -43,8 +43,6 @@ namespace AISapi.BA
             }
             catch (Exception ex)
             {
-                await _connection.CloseAsync();
-
                 return new Tuple<List<Vessel>, string>(new List<Vessel>(), ex.ToString());
             }
             finally

@@ -10,13 +10,10 @@ namespace AISapi.Controllers;
 [Route("[controller]")]
 public class VesselController : ControllerBase
 {
-    private readonly ILogger<VesselController> _logger;
     private readonly IVesselBA _vesselBA;
 
-    public VesselController(IVesselBA vesselBA,
-        ILogger<VesselController> logger)
+    public VesselController(IVesselBA vesselBA)
     {
-        _logger = logger;
         _vesselBA = vesselBA;
     }
 
