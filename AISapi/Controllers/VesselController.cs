@@ -1,4 +1,6 @@
-﻿using AISapi.Models;
+﻿using AISapi.BA;
+using AISapi.BA.Interfaces;
+using AISapi.Models;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -9,19 +11,24 @@ namespace AISapi.Controllers;
 public class VesselController : ControllerBase
 {
     private readonly ILogger<VesselController> _logger;
-    //private readonly MySqlConnection _connection;
+    private readonly IVesselBA _vesselBA;
 
-    public VesselController(MySqlConnection mySqlConnection,
+    public VesselController(IVesselBA vesselBA,
         ILogger<VesselController> logger)
     {
         _logger = logger;
-        //_connection = mySqlConnection;
+        _vesselBA = vesselBA;
     }
 
     [HttpGet(Name = "GetVesselData")]
-    public IEnumerable<Vessel> Get()
+    public async Task<IActionResult> Get()
     {
-        
+        (List<Vessel> vessels, string error) = await _vesselBA.GetVesselsAsync();
+
+        if (vessels.Any())
+            return Ok(vessels);
+        else
+            return NotFound(error);
     }
 }
 

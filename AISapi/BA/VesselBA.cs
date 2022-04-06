@@ -7,23 +7,50 @@ namespace AISapi.BA
 {
 	public class VesselBA : IVesselBA
 	{
-		private MySqlConnection _connection;
+		private readonly MySqlConnection _connection;
 
-		public VesselBA(MySqlConnection mySqlConnection)
-		{
-			_connection = mySqlConnection;
-		}
-
-		public async string GetVessels()
+		public VesselBA(MySqlConnection connection)
         {
+			_connection = connection;
+        }
 
-			var query = "SELECT * FROM VESSELS";
+		public async Task<Tuple<List<Vessel>, string>> GetVesselsAsync()
+        {
+            try
+            {
+                await _connection.OpenAsync();
 
-			var command = new MySqlCommand(query, _connection);
+                var vesselList = new List<Vessel>();
 
-			var vessels = command.ExecuteNonQuery().ToString();
+                var query = "SELECT * FROM VESSEL;";
 
-			return vessels;
+                var command = new MySqlCommand(query, _connection);
+
+                var vessels = await command.ExecuteReaderAsync();
+
+                while (await vessels.ReadAsync())
+                {
+                    vesselList.Add(new Vessel
+                    {
+                        IMO = vessels.GetInt32(0),
+                        Flag = vessels.GetString(1),
+                        Name = vessels.GetString(2)
+                    });
+                }
+
+                return new Tuple<List<Vessel>, string>(vesselList, string.Empty);
+
+            }
+            catch (Exception ex)
+            {
+                await _connection.CloseAsync();
+
+                return new Tuple<List<Vessel>, string>(new List<Vessel>(), ex.ToString());
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
 
         }
 	}
