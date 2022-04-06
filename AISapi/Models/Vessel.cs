@@ -1,5 +1,4 @@
-﻿using System;
-namespace AISapi.Models
+﻿namespace AISapi.Models
 {
 	public class Vessel
 	{
