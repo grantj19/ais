@@ -1,5 +1,6 @@
 ﻿namespace AISapi.Models
 {
+
 	public class Vessel
 	{
         public int IMO { get; set; }

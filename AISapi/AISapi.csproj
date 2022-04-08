@@ -17,11 +17,9 @@
     <None Remove="MySqlConnector" />
     <None Remove="Models\" />
     <None Remove="BA\" />
-    <None Remove="BA\Interfaces\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="BA\" />
-    <Folder Include="BA\Interfaces\" />
   </ItemGroup>
 </Project>

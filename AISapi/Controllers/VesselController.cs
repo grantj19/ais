@@ -1,4 +1,4 @@
-﻿using AISapi.BA.Interfaces;
+﻿using AISapi.BA;
 using AISapi.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace AISapi.Controllers;
 [Route("[controller]")]
 public class VesselController : ControllerBase
 {
-    private readonly IVesselBA _vesselBA;
+    private readonly VesselBA _vesselBA;
 
-    public VesselController(IVesselBA vesselBA)
+    public VesselController(VesselBA vesselBA)
     {
         _vesselBA = vesselBA;
     }
