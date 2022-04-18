@@ -9,6 +9,7 @@ builder.Configuration.AddJsonFile("appsettings.json");
 
 builder.Services.AddTransient<MySqlConnection>(_ => new MySqlConnection(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<VesselBA>();
+builder.Services.AddScoped<AISMessageBA>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
