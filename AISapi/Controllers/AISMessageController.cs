@@ -20,10 +20,10 @@ namespace AISapi.Controllers
 		{
 			(AISMessage message, string error) = await _aisMessageBA.GetAISMessagesByIdAsync(messageId);
 
-			if (message is not null)
+			if (message.Id > 0)
 				return Ok(message);
 			else
-				return NotFound(error);
+				return NoContent();
 		}
     }
 }

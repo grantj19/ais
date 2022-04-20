@@ -35,8 +35,8 @@ namespace AISapi.BA
                     {
                         Id = results.GetInt32(0),
                         Timestamp = results.GetDateTime(1),
-                        Class = results.GetString(2),
-                        MMSI = results.GetInt32(3),
+                        MMSI = results.GetInt32(2),
+                        Class = results.GetString(3),
                         Vessel_IMO = results.IsDBNull(4) ? null : results.GetInt32(4)
                     };
                 }
