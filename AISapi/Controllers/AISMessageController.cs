@@ -16,12 +16,12 @@ namespace AISapi.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Get()
+		public async Task<IActionResult> Get(int messageId)
 		{
-			(List<AISMessage> vessels, string error) = await _aisMessageBA.GetAISMessagesAsync();
+			(AISMessage message, string error) = await _aisMessageBA.GetAISMessagesByIdAsync(messageId);
 
-			if (vessels.Any())
-				return Ok(vessels);
+			if (message is not null)
+				return Ok(message);
 			else
 				return NotFound(error);
 		}

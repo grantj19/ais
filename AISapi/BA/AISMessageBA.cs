@@ -12,37 +12,42 @@ namespace AISapi.BA
 			_connection = connection;
 		}
 
-        public async Task<Tuple<List<AISMessage>, string>> GetAISMessagesAsync()
+        public async Task<Tuple<AISMessage, string>> GetAISMessagesByIdAsync(int messageId)
         {
             try
             {
                 await _connection.OpenAsync();
 
-                var messageList = new List<AISMessage>();
+                var message = new AISMessage();
 
-                var query = "SELECT * FROM AIS_MESSAGE";
+                var query = "SELECT * FROM AIS_MESSAGE" +
+                    " WHERE Id = @Id";
 
                 var command = new MySqlCommand(query, _connection);
 
-                var messages = await command.ExecuteReaderAsync();
+                command.Parameters.AddWithValue("@Id", messageId);
 
-                while (await messages.ReadAsync())
+                var results = command.ExecuteReaderAsync().Result;
+
+                if (await results.ReadAsync())
                 {
-                    messageList.Add(new AISMessage
+                    message = new AISMessage
                     {
-                        Timestamp = messages.GetDateTime(1),
-                        MMSI = messages.GetInt32(2),
-                        Class = messages.GetString(3),
-                        Vessel_IMO = messages.IsDBNull(4) ? null : messages.GetInt32(4)
-                    });
+                        Id = results.GetInt32(0),
+                        Timestamp = results.GetDateTime(1),
+                        Class = results.GetString(2),
+                        MMSI = results.GetInt32(3),
+                        Vessel_IMO = results.IsDBNull(4) ? null : results.GetInt32(4)
+                    };
                 }
+                    
 
-                return new Tuple<List<AISMessage>, string>(messageList, string.Empty);
+                return new Tuple<AISMessage, string>(message, string.Empty);
 
             }
             catch (Exception ex)
             {
-                return new Tuple<List<AISMessage>, string>(new List<AISMessage>(), ex.ToString());
+                return new Tuple<AISMessage, string>(new AISMessage(), ex.ToString());
             }
             finally
             {
