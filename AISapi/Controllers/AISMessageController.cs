@@ -1,5 +1,6 @@
 ﻿using AISapi.BA;
 using AISapi.Models;
+using AISapi.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AISapi.Controllers
@@ -25,6 +26,14 @@ namespace AISapi.Controllers
 			else
 				return NoContent();
 		}
+
+		[HttpPost]
+		public async Task<IActionResult> Insert(AISMessageInsertRequest request)
+        {
+			await _aisMessageBA.InsertAISMessagesAsync(request);
+
+			return Ok();
+        }
     }
 }
 
