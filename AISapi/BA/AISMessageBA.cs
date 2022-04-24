@@ -1,4 +1,5 @@
-﻿using AISapi.Models;
+﻿using System.Data;
+using AISapi.Models;
 using AISapi.Models.Requests;
 using AISapi.Utilities;
 using MySql.Data.MySqlClient;
@@ -8,7 +9,6 @@ namespace AISapi.BA
 	public class AISMessageBA
 	{
 		private readonly MySqlConnection _connection;
-        private MySqlTransaction _transaction;
 
         public AISMessageBA(MySqlConnection connection)
 		{
@@ -60,123 +60,265 @@ namespace AISapi.BA
         }
 
 
-        public async Task InsertAISMessagesAsync(AISMessageInsertRequest request)
+        public async Task<string> InsertAISMessagesAsync(AISMessageInsertRequest request)
         {
+            MySqlTransaction _transaction;
+
+            await _connection.OpenAsync();
+
+            _transaction = await _connection.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+
             try
             {
-
-                var _commands = new List<MySqlCommand>();
-                
                 foreach (var msg in request.AISMessages)
                 {
+                    await InsertAISMessageAsync(msg, _transaction);
 
-                    _commands = CreateInsertAISMessageCommand(msg, _commands);
-
-                    Enum.TryParse(msg.Type.ToString().RemoveUnderscore(), true, out MsgType msgType);
+                    Enum.TryParse(msg.MsgType?.RemoveUnderscore(), true, out MsgType msgType);
 
                     if (msgType == MsgType.PositionReport)
-                    {
-                        _commands = CreateInsertPositionReportCommand(msg, _commands);
-                    }
+                        await InsertPositionReportAsync(msg, _transaction);
                     else
-                    {
-                        var messages = new List<AISMessage>();
-
-                        var query = "SELECT * FROM AIS_MESSAGE" +
-                            " WHERE Id = @Id";
-
-                        var command = new MySqlCommand(query, _connection);
-
-                        //command.Parameters.AddWithValue("@Id", );
-
-                        var results = command.ExecuteReaderAsync().Result;
-
-                    }
+                        await InsertStaticDataAsync(msg, _transaction);
                 }
 
-                await _connection.OpenAsync();
-                _transaction = _connection.BeginTransaction();
+                await _transaction.CommitAsync();
 
-                //run commands
-                foreach (var cmd in _commands)
-                {
-                    cmd.Transaction = _transaction;
-
-                    cmd.ExecuteNonQuery();
-                }
+                return string.Empty;
 
             }
             catch (Exception ex)
             {
-                //return new Tuple<List<AISMessage>, string>>(new List<AISMessage>(), ex.ToString());
+                Console.WriteLine(ex.Message);
+                await _transaction.RollbackAsync();
+
+                return ex.Message;
             }
             finally
             {
+                await _transaction.DisposeAsync();
                 await _connection.CloseAsync();
             }
         }
 
-        private List<MySqlCommand> CreateInsertAISMessageCommand(AISMessageRequest msg, List<MySqlCommand> _commands)
+        private async Task InsertAISMessageAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
-            var query = "INSERT INTO AIS_MESSAGE VALUES (@Timestamp, @MMSI, @Class, @Vessel_IMO)";
+            var command = new MySqlCommand
+            {
+                Connection = _connection,
+                Transaction = _transaction
+            };
 
-            var command = new MySqlCommand(query, _connection);
+            try
+            {
+                var query = "INSERT INTO AIS_MESSAGE (Timestamp, MMSI, Class, Vessel_IMO, MessageType) VALUES (@Timestamp, @MMSI, @Class, @Vessel_IMO, @MessageType)";
 
-            command.Parameters.AddWithValue("@Timestamp", msg.Timestamp);
-            command.Parameters.AddWithValue("@MMSI", msg.MMSI);
-            command.Parameters.AddWithValue("@Class", msg.Class);
-            command.Parameters.AddWithValue("@Vessel_IMO", msg.IMO);
+                command.CommandText = query;
 
-            _commands.Add(command);
+                command.Parameters.AddWithValue("@Timestamp", msg.Timestamp);
+                command.Parameters.AddWithValue("@MMSI", msg.MMSI);
+                command.Parameters.AddWithValue("@Class", msg.Class);
+                command.Parameters.AddWithValue("@Vessel_IMO", msg.IMO?.GetType() == typeof(int) ? msg.IMO : null);
+                command.Parameters.AddWithValue("@MessageType", msg.MsgType);
 
-            return _commands;
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            finally
+            {
+                await command.DisposeAsync();
+            }
+            
         }
 
-        private List<MySqlCommand> CreateInsertPositionReportCommand(AISMessageRequest msg, List<MySqlCommand> _commands)
+        private async Task InsertPositionReportAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
-            var query = "INSERT INTO POSITION_REPORT VALUES" +
-                " (@AISMessageId, @Status, @Longitude, @Latitude, @RoT, @SoG, @CoG, @Heading, @LastStaticDataId)";
 
-            var command = new MySqlCommand(query, _connection);
+            var command = new MySqlCommand
+            {
+                Connection = _connection,
+                Transaction = _transaction
+            };
 
-            command.Parameters.AddWithValue("@AISMessageId", GetAISMessageId(msg.Timestamp ?? new DateTime(), msg.MMSI ?? 0)); //Calculated
-            command.Parameters.AddWithValue("@Status", msg.Status);
-            command.Parameters.AddWithValue("@Longitude", msg.Position.Coordinates[0]);
-            command.Parameters.AddWithValue("@Latitude", msg.Position.Coordinates[1]);
-            command.Parameters.AddWithValue("@RoT", msg.RoT);
-            command.Parameters.AddWithValue("@SoG", msg.SoG);
-            command.Parameters.AddWithValue("@CoG", msg.CoG);
-            command.Parameters.AddWithValue("@Heading", msg.Heading);
-            command.Parameters.AddWithValue("@LastStaticDataId", null); //Calculated
+            try
+            {
 
-            _commands.Add(command);
+                var aisMessageId = await GetAISMessageIdAsync(msg.MMSI, "position_report");
 
-            return _commands;
+                var query = "INSERT INTO POSITION_REPORT (AISMessage_Id, NavigationalStatus, Longitude, Latitude, RoT, SoG, CoG, Heading, LastStaticData_Id) VALUES" +
+                    " (@AISMessageId, @Status, @Longitude, @Latitude, @RoT, @SoG, @CoG, @Heading, @LastStaticDataId)";
+
+                command.CommandText = query;
+
+                command.Parameters.AddWithValue("@AISMessageId", aisMessageId);
+                command.Parameters.AddWithValue("@Status", msg.Status);
+                command.Parameters.AddWithValue("@Longitude", msg.Position?.Coordinates?[0]);
+                command.Parameters.AddWithValue("@Latitude", msg.Position?.Coordinates?[1]);
+                command.Parameters.AddWithValue("@RoT", msg.RoT);
+                command.Parameters.AddWithValue("@SoG", msg.SoG);
+                command.Parameters.AddWithValue("@CoG", msg.CoG);
+                command.Parameters.AddWithValue("@Heading", msg.Heading);
+                command.Parameters.AddWithValue("@LastStaticDataId", await GetLastStaticDataIdAsync(aisMessageId)); //Calculated
+
+                await command.ExecuteNonQueryAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            finally
+            {
+                await command.DisposeAsync();
+            }
         }
 
-        private async Task<int> GetAISMessageId(DateTime timestamp, int MMSI)
+        private async Task InsertStaticDataAsync(AISMessageRequest msg, MySqlTransaction _transaction)
+        {
+            var command = new MySqlCommand
+            {
+                Connection = _connection,
+                Transaction = _transaction
+            };
+
+            try
+            {
+                var aisMessageId = await GetAISMessageIdAsync(msg.MMSI, "static_data");
+
+                var query = "INSERT INTO STATIC_DATA (AISMessage_Id, AISIMO, CallSign, Name, VesselType, CargoType, Length, Breadth, Draught, AISDestination, ETA, DestinationPort_Id) VALUES" +
+                    " (@AISMessageId, @AISIMO, @CallSign, @Name, @VesselType, @CargoType, @Length, @Breadth, @Draught, @AISDestination, @ETA, @DestinationPort_Id)";
+
+                command.CommandText = query;
+
+                command.Parameters.AddWithValue("@AISMessageId", aisMessageId);
+                command.Parameters.AddWithValue("@AISIMO", msg.IMO?.GetType() == typeof(int) ? msg.IMO : null);
+                command.Parameters.AddWithValue("@CallSign", msg.CallSign);
+                command.Parameters.AddWithValue("@Name", msg.Name);
+                command.Parameters.AddWithValue("@VesselType", msg.VesselType);
+                command.Parameters.AddWithValue("@CargoType", msg.SoG);
+                command.Parameters.AddWithValue("@Length", msg.Length);
+                command.Parameters.AddWithValue("@Breadth", msg.Breadth);
+                command.Parameters.AddWithValue("@Draught", msg.Draught);
+                command.Parameters.AddWithValue("@AISDestination", msg.Destination);
+                command.Parameters.AddWithValue("@ETA", msg.ETA);
+                command.Parameters.AddWithValue("@DestinationPort_Id", await GetDestinationPortIdAsync(msg.Destination));
+
+                await command.ExecuteNonQueryAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            finally
+            {
+                await command.DisposeAsync();
+            }
+        }
+
+        private async Task<int?> GetDestinationPortIdAsync(string destination)
         {
             try
             {
-                await _connection.OpenAsync();
+                if (string.IsNullOrEmpty(destination))
+                    return null;
 
-                var query = "SELECT Id FROM AIS_MESSAGE WHERE " +
-                    " Timestamp = @Timestamp" +
-                    " AND MMSI = @MMSI";
+                var query = "SELECT Id FROM PORT WHERE " +
+                    "Name = @Name";
 
                 var command = new MySqlCommand(query, _connection);
 
-                command.Parameters.AddWithValue("@Timestamp", timestamp);
-                command.Parameters.AddWithValue("@MMSI", MMSI);
+                command.Parameters.AddWithValue("@Name", destination);
 
-                return int.Parse(command.ExecuteScalarAsync().Result.ToString() ?? "0");
+                var id = command.ExecuteScalarAsync().Result?.ToString();
+
+                await command.DisposeAsync();
+
+                if (!string.IsNullOrEmpty(id))
+                    return int.Parse(id);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        private async Task<int> GetAISMessageIdAsync(int mmsi, string messageType)
+        {
+            var command = _connection.CreateCommand();
+
+            try
+            {
+                var query = "SELECT Id FROM AIS_MESSAGE WHERE " +
+                    "MMSI = @MMSI " +
+                    "AND MessageType = @MessageType " +
+                    "ORDER BY Id DESC " +
+                    "LIMIT 1";
+
+                command.CommandText = query;
+
+                command.Parameters.AddWithValue("@MMSI", mmsi);
+                command.Parameters.AddWithValue("@MessageType", messageType);
+
+                var id = command.ExecuteScalarAsync().Result?.ToString();
+
+                return int.Parse(id);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new int();
             }
             finally
             {
-                await _connection.CloseAsync();
+                await command.DisposeAsync();
             }
+        }
 
+        private async Task<int?> GetLastStaticDataIdAsync(int aisMessageId)
+        {
+            var command = _connection.CreateCommand();
 
+            try
+            {
+                if (aisMessageId <= 0)
+                    return null;
+
+                var query = "SELECT Id FROM AIS_MESSAGE WHERE " +
+                    "MessageType = @MessageType " +
+                    "AND MMSI = ( SELECT MMSI FROM AIS_MESSAGE WHERE Id = @aisMessageId) " +
+                    "ORDER BY Id DESC " +
+                    "LIMIT 1";
+
+                command.CommandText = query;
+
+                command.Parameters.AddWithValue("@MessageType", "static_data");
+                command.Parameters.AddWithValue("@aisMessageId", aisMessageId);
+
+                var id = command.ExecuteScalarAsync().Result?.ToString();
+
+                if (!string.IsNullOrEmpty(id))
+                    return int.Parse(id);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+            finally
+            {
+                await command.DisposeAsync();
+            }
         }
     }
 }

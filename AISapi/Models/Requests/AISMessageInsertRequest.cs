@@ -11,9 +11,9 @@ namespace AISapi.Models.Requests
     {
         public DateTime? Timestamp { get; set; }
         public string? Class { get; set; }
-        public int? MMSI { get; set; }
-        public string? IMO { get; set; }
-        public MsgType? Type { get; set; }
+        public int MMSI { get; set; }
+        public dynamic? IMO { get; set; }
+        public string? MsgType { get; set; }
         public string? Status { get; set; } //Mapped to nav status
         public Position? Position { get; set; }
         public double? RoT { get; set; }
@@ -26,7 +26,7 @@ namespace AISapi.Models.Requests
         public string? CargoType { get; set; }
         public int? Length { get; set; }
         public int? Breadth { get; set; }
-        public int? Draught { get; set; }
+        public double? Draught { get; set; }
         public string? Destination { get; set; }
         public DateTime? ETA { get; set; }
         public int? A { get; set; }

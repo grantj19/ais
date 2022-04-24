@@ -19,11 +19,13 @@
     <None Remove="BA\" />
     <None Remove="Models\Requests\" />
     <None Remove="Utilities\" />
+    <None Remove="Data\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="BA\" />
     <Folder Include="Models\Requests\" />
     <Folder Include="Utilities\" />
+    <Folder Include="Data\" />
   </ItemGroup>
 </Project>
