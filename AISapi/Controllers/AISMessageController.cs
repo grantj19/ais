@@ -30,10 +30,10 @@ namespace AISapi.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Insert(AISMessageInsertRequest request)
         {
-			var error = await _aisMessageBA.InsertAISMessagesAsync(request);
+			(int recordsInserted, string error) = await _aisMessageBA.InsertAISMessagesAsync(request);
 
 			if (string.IsNullOrEmpty(error))
-				return Ok();
+				return Ok(recordsInserted);
 			return BadRequest(error);
         }
     }

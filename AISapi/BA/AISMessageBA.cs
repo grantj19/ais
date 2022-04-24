@@ -9,10 +9,12 @@ namespace AISapi.BA
 	public class AISMessageBA
 	{
 		private readonly MySqlConnection _connection;
+        private readonly VesselBA _vesselBA;
 
-        public AISMessageBA(MySqlConnection connection)
+        public AISMessageBA(MySqlConnection connection, VesselBA vesselBA)
 		{
 			_connection = connection;
+            _vesselBA = vesselBA;
 		}
 
         public async Task<Tuple<AISMessage, string>> GetAISMessagesByIdAsync(int messageId)
@@ -60,8 +62,9 @@ namespace AISapi.BA
         }
 
 
-        public async Task<string> InsertAISMessagesAsync(AISMessageInsertRequest request)
+        public async Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request)
         {
+            var recordsInserted = 0;
             MySqlTransaction _transaction;
 
             await _connection.OpenAsync();
@@ -72,7 +75,7 @@ namespace AISapi.BA
             {
                 foreach (var msg in request.AISMessages)
                 {
-                    await InsertAISMessageAsync(msg, _transaction);
+                    recordsInserted += await InsertAISMessageAsync(msg, _transaction);
 
                     Enum.TryParse(msg.MsgType?.RemoveUnderscore(), true, out MsgType msgType);
 
@@ -84,7 +87,7 @@ namespace AISapi.BA
 
                 await _transaction.CommitAsync();
 
-                return string.Empty;
+                return new Tuple<int, string>(recordsInserted, string.Empty);
 
             }
             catch (Exception ex)
@@ -92,7 +95,7 @@ namespace AISapi.BA
                 Console.WriteLine(ex.Message);
                 await _transaction.RollbackAsync();
 
-                return ex.Message;
+                return new Tuple<int, string>(0, ex.Message);
             }
             finally
             {
@@ -101,7 +104,7 @@ namespace AISapi.BA
             }
         }
 
-        private async Task InsertAISMessageAsync(AISMessageRequest msg, MySqlTransaction _transaction)
+        private async Task<int> InsertAISMessageAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
             var command = new MySqlCommand
             {
@@ -111,6 +114,17 @@ namespace AISapi.BA
 
             try
             {
+                var vesselIMO = msg.IMO?.ValueKind == System.Text.Json.JsonValueKind.Number ? int.Parse(msg.IMO.ToString()) : null;
+
+                if (vesselIMO is not null)
+                {
+                    (Vessel existingVessel, string error) = (Tuple<Vessel, string>)await _vesselBA.GetVesselByIMOAsync(vesselIMO, _connection);
+
+                    if (existingVessel.IMO is null)
+                        await _vesselBA.InsertVesselAsync(msg, _connection, _transaction);
+                }
+
+
                 var query = "INSERT INTO AIS_MESSAGE (Timestamp, MMSI, Class, Vessel_IMO, MessageType) VALUES (@Timestamp, @MMSI, @Class, @Vessel_IMO, @MessageType)";
 
                 command.CommandText = query;
@@ -118,10 +132,10 @@ namespace AISapi.BA
                 command.Parameters.AddWithValue("@Timestamp", msg.Timestamp);
                 command.Parameters.AddWithValue("@MMSI", msg.MMSI);
                 command.Parameters.AddWithValue("@Class", msg.Class);
-                command.Parameters.AddWithValue("@Vessel_IMO", msg.IMO?.GetType() == typeof(int) ? msg.IMO : null);
+                command.Parameters.AddWithValue("@Vessel_IMO", vesselIMO);
                 command.Parameters.AddWithValue("@MessageType", msg.MsgType);
 
-                await command.ExecuteNonQueryAsync();
+                return await command.ExecuteNonQueryAsync();
             }
             catch (Exception ex)
             {
@@ -196,7 +210,7 @@ namespace AISapi.BA
                 command.CommandText = query;
 
                 command.Parameters.AddWithValue("@AISMessageId", aisMessageId);
-                command.Parameters.AddWithValue("@AISIMO", msg.IMO?.GetType() == typeof(int) ? msg.IMO : null);
+                command.Parameters.AddWithValue("@AISIMO", msg.IMO?.ValueKind == System.Text.Json.JsonValueKind.Number ? int.Parse(msg.IMO.ToString()) : null);
                 command.Parameters.AddWithValue("@CallSign", msg.CallSign);
                 command.Parameters.AddWithValue("@Name", msg.Name);
                 command.Parameters.AddWithValue("@VesselType", msg.VesselType);
