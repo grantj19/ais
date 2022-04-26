@@ -28,7 +28,8 @@ namespace AISapi.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> Insert(AISMessageInsertRequest request)
+		[Route("Batch")]
+		public async Task<IActionResult> InsertBatch(AISMessageInsertRequest request)
         {
 			(int recordsInserted, string error) = await _aisMessageBA.InsertAISMessagesAsync(request);
 
@@ -36,6 +37,22 @@ namespace AISapi.Controllers
 				return Ok(recordsInserted);
 			return BadRequest(error);
         }
-    }
+
+		[HttpPost]
+		public async Task<IActionResult> Insert(AISMessageRequest request)
+		{
+			(_ , string error) = await _aisMessageBA.InsertAISMessagesAsync(new AISMessageInsertRequest
+			{
+				AISMessages = new List<AISMessageRequest>
+                {
+					request
+                }
+			});
+
+			if (string.IsNullOrEmpty(error))
+				return Ok(1);
+			return BadRequest(0);
+		}
+	}
 }
 
