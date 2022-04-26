@@ -1,5 +1,6 @@
 ﻿using AISapi.BA;
 using AISapi.Models;
+using AISapi.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AISapi.Controllers
@@ -16,15 +17,25 @@ namespace AISapi.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Get()
+		public async Task<IActionResult> Get(int messageId)
 		{
-			(List<AISMessage> vessels, string error) = await _aisMessageBA.GetAISMessagesAsync();
+			(AISMessage message, string error) = await _aisMessageBA.GetAISMessagesByIdAsync(messageId);
 
-			if (vessels.Any())
-				return Ok(vessels);
+			if (message.Id > 0)
+				return Ok(message);
 			else
-				return NotFound(error);
+				return NoContent();
 		}
+
+		[HttpPost]
+		public async Task<IActionResult> Insert(AISMessageInsertRequest request)
+        {
+			(int recordsInserted, string error) = await _aisMessageBA.InsertAISMessagesAsync(request);
+
+			if (string.IsNullOrEmpty(error))
+				return Ok(recordsInserted);
+			return BadRequest(error);
+        }
     }
 }
 

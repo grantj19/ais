@@ -8,6 +8,13 @@ namespace AISapi.Models
         public string? Class { get; set; }
         public int MMSI { get; set; }
         public int? Vessel_IMO { get; set; }
+        public MsgType Type { get; set; }
+    }
+
+    public enum MsgType
+    {
+        PositionReport,
+        StaticData
     }
 }
 
