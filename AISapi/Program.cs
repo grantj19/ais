@@ -1,4 +1,5 @@
-﻿using AISapi.BA;
+﻿using System.Text.Json.Serialization;
+using AISapi.BA;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,8 +11,12 @@ builder.Configuration.AddJsonFile("appsettings.json");
 builder.Services.AddTransient<MySqlConnection>(_ => new MySqlConnection(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<VesselBA>();
 builder.Services.AddScoped<AISMessageBA>();
+builder.Services.AddScoped<PositionReportBA>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -43,7 +43,7 @@ namespace AISapi.BA
                         MMSI = results.GetInt32(2),
                         Class = results.GetString(3),
                         Vessel_IMO = results.IsDBNull(4) ? null : results.GetInt32(4)
-                    };
+                    };  
                 }
                     
 
