@@ -152,6 +152,71 @@ namespace AISapi.BA
                 await command.DisposeAsync();
             }
         }
+
+        public async Task<Tuple<Vessel, string>> GetVesselByIMOAsync(int IMO, MySqlConnection? connection = default)
+        {
+            var closeConnection = false;
+
+            if (connection is null)
+            {
+                connection = _connection;
+                await connection.OpenAsync();
+                closeConnection = true;
+            }
+
+            var command = new MySqlCommand
+            {
+                Connection = connection
+            };
+
+            var vessel = new Vessel();
+
+            try
+            {
+                var query = "SELECT * FROM VESSEL WHERE IMO = @IMO LIMIT 1";
+
+                command.CommandText = query;
+
+                command.Parameters.AddWithValue("@IMO", IMO);
+
+                var result = await command.ExecuteReaderAsync();
+
+                while (await result.ReadAsync())
+                {
+                    vessel = new Vessel
+                    {
+                        IMO = result.IsDBNull(0) ? null : result.GetInt32(0),
+                        Flag = result.IsDBNull(1) ? null : result.GetString(1),
+                        Name = result.IsDBNull(2) ? null : result.GetString(2),
+                        Built = result.IsDBNull(3) ? null : result.GetInt32(3),
+                        CallSign = result.IsDBNull(4) ? null : result.GetString(4),
+                        Length = result.IsDBNull(5) ? null : result.GetInt32(5),
+                        Breadth = result.IsDBNull(6) ? null : result.GetInt32(6),
+                        Tonnage = result.IsDBNull(7) ? null : result.GetInt32(7),
+                        MMSI = result.IsDBNull(8) ? null : result.GetInt32(8),
+                        Type = result.IsDBNull(9) ? null : result.GetString(9),
+                        Status = result.IsDBNull(10) ? null : result.GetString(10),
+                        Owner = result.IsDBNull(11) ? null : result.GetString(11),
+
+                    };
+                }
+
+                await result.DisposeAsync();
+
+                return new Tuple<Vessel, string>(vessel, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return new Tuple<Vessel, string>(new Vessel(), ex.Message);
+            }
+            finally
+            {
+                await command.DisposeAsync();
+
+                if (closeConnection)
+                    await connection.CloseAsync();
+            }
+        }
 	}
 }
 
