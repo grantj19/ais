@@ -4,8 +4,8 @@ namespace AISapi.Models
     public class PositionReport : AISMessage
     {
         public string? NavigationalStatus { get; set; }
-        public double Longitude { get; set; }
-        public double Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public double? Latitude { get; set; }
         public double RoT { get; set; }
         public double SoG { get; set; }
         public double CoG { get; set; }

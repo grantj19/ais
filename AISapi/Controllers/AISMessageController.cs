@@ -22,10 +22,9 @@ namespace AISapi.Controllers
 		{
 			(AISMessage message, string error) = await _aisMessageBA.GetAISMessagesByIdAsync(messageId);
 
-			if (message.Id > 0)
+			if (string.IsNullOrEmpty(error))
 				return Ok(message);
-			else
-				return NoContent();
+			return BadRequest(error);
 		}
 
 		/// <summary> Insert Batch of AIS Messages </summary>
