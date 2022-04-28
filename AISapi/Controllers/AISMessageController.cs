@@ -1,4 +1,5 @@
 ﻿using AISapi.BA;
+using AISapi.BA.Interfaces;
 using AISapi.Models;
 using AISapi.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace AISapi.Controllers
 	[Route("[controller]")]
 	public class AISMessageController : ControllerBase
 	{
-		private readonly AISMessageBA _aisMessageBA;
+		private readonly IAISMessageBA _aisMessageBA;
 
-		public AISMessageController(AISMessageBA aisMessageBA)
+		public AISMessageController(IAISMessageBA aisMessageBA)
 		{
 			_aisMessageBA = aisMessageBA;
 		}
@@ -27,6 +28,14 @@ namespace AISapi.Controllers
 				return NoContent();
 		}
 
+		/// <summary> Insert Batch of AIS Messages </summary>
+		/// <param name="request">AIS Message Insert Request</param>
+		/// <returns>
+        ///	Number of inserted messages
+        /// </returns>
+        
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[HttpPost]
 		[Route("Batch")]
 		public async Task<IActionResult> InsertBatch(AISMessageInsertRequest request)

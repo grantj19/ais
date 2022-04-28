@@ -1,10 +1,11 @@
-﻿using AISapi.Models;
+﻿using AISapi.BA.Interfaces;
+using AISapi.Models;
 using AISapi.Models.Requests;
 using MySql.Data.MySqlClient;
 
 namespace AISapi.BA
 {
-    public class VesselBA
+    public class VesselBA : IVesselBA
 	{
 		private readonly MySqlConnection _connection;
 
