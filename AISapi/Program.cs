@@ -1,9 +1,8 @@
-using System.Reflection;
+﻿using System.Reflection;
 using AISapi.BA;
 using AISapi.BA.Interfaces;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
-using AISapi.BA;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +42,6 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
 
 app.UseHttpsRedirection();
 

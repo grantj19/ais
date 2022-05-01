@@ -17,6 +17,23 @@ namespace AISapi.Controllers
 			_positionReportBA = positionReportBA;
         }
 
+		/// <summary> Get all most recent ship positions </summary>
+		/// <returns>Array of ship documents</returns>
+		/// <response code="200">
+        /// Returns number of inserted AIS Messages
+        ///
+        /// Sample response:
+        ///
+        ///		{
+        ///			"MMSI": 0,
+        ///			"Latitude": 0.0,
+        ///			"Longitude": 0.0,
+        ///			"IMO": 0
+        ///		}
+        ///
+        /// Note: Properties are dropped from the response if they have null values
+        /// </response>
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[HttpGet]
 		public async Task<IActionResult> Get()
         {
@@ -27,6 +44,23 @@ namespace AISapi.Controllers
 			return BadRequest(error);
 		}
 
+		/// <summary> Get all most recent ship positions by MMSI</summary>
+		/// <returns>A single ship document</returns>
+		/// <response code="200">
+		/// Returns number of inserted AIS Messages
+		///
+		/// Sample response:
+		///
+		///		{
+		///			"MMSI": 0,
+		///			"Latitude": 0.0,
+		///			"Longitude": 0.0,
+		///			"IMO": 0
+		///		}
+		///
+		/// Note: Properties are dropped from the response if they have null values
+		/// </response>
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[HttpGet]
 		[Route("GetByMMSI")]
 		public async Task<IActionResult> GetByMMSI(int MMSI)
