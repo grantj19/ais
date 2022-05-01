@@ -23,8 +23,14 @@
 
   <ItemGroup>
     <None Remove="Moq" />
+    <None Remove="BATests\" />
+    <None Remove="ControllerTests\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AISapi\AISapi.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="BATests\" />
+    <Folder Include="ControllerTests\" />
   </ItemGroup>
 </Project>

@@ -406,3 +406,6 @@ ASALocalRun/
 
 #Web Api appsettings
 appsettings.json
+AISapi/obj/Debug/net6.0/AISapi.csproj.AssemblyReference.cache
+AISapi/appsettings.json
+AISapi/appsettings.json

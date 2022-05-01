@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using AISapi.BA.Interfaces;
 using AISapi.Models;
 using AISapi.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Threading.Tasks;
+using AISapi.BA;
 
-namespace AISTests;
+namespace AISTests.ControllerTests;
 
 public class VesselControllerTests
 {
@@ -17,7 +17,7 @@ public class VesselControllerTests
     [Fact]
     public async Task Get_WithAnyItem_ReturnsOK()
     {
-        Mock<IVesselBA> baStub = new();
+        Mock<VesselBA> baStub = new();
         var items = new Tuple<List<Vessel>, string>(new List<Vessel>()
         {
             CreateRandomVessel(),
@@ -39,7 +39,7 @@ public class VesselControllerTests
     [Fact]
     public async Task Get_WithNoItems_ReturnsNotFound()
     {
-        Mock<IVesselBA> baStub = new();
+        Mock<VesselBA> baStub = new();
         var items = new Tuple<List<Vessel>, string>(new List<Vessel>(), string.Empty);
 
         baStub.Setup(v => v.GetVesselsAsync()).ReturnsAsync(items);
