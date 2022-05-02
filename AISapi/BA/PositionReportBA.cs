@@ -14,6 +14,11 @@ namespace AISapi.BA
 			_connection = connection;
 		}
 
+        // Receive a list of all position reports.
+        // Parameters: A MySql connection object.
+        // Return: A tuple consisting of:
+        //     -A list of position reports, with all associated non-map view attributes
+        //     -An error message string
         public async Task<Tuple<List<PositionReport>, string>> GetPositionReport(MySqlConnection? connection = null)
         {
             var closeConnection = false;
@@ -77,9 +82,14 @@ namespace AISapi.BA
             }
         }
 
+        // Receive the most recent position of a vessel, given a specific MMSI.
+        // First calls GetPositionReports() to filter down from all AIS messages for SQL query.
+        // Parameters: The MMSI, an int, supplied by the user.
+        // Return: A tuple consisting of:
+        //     -A position report object, containing the vessel IMO, MMSI, latitude, and longitude
+        //     -An error message string
         public async Task<Tuple<PositionReport, string>> GetPositionByMMSIAsync(int MMSI)
         {
-
             await _connection.OpenAsync();
 
             var command = new MySqlCommand
@@ -136,6 +146,12 @@ namespace AISapi.BA
             }
         }
 
+        // Receive all most recent vessel positions.
+        // First calls GetPositionReports() to filter down from all AIS messages for SQL query.
+        // Parameters: None.
+        // Return: A tuple consisting of:
+        //     -A list of position report objects, containing the vessel IMO, MMSI, latitude, and longitude
+        //     -An error message string
         public async Task<Tuple<List<PositionReport>, string>> GetRecentPositionsAsync()
         {
             await _connection.OpenAsync();
