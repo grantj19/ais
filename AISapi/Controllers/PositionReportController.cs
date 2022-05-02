@@ -1,5 +1,6 @@
 ﻿using System;
-using AISapi.BA;
+using AISapi.DA;
+using AISapi.DA.Interfaces;
 using AISapi.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,9 @@ namespace AISapi.Controllers
 	public class PositionReportController : ControllerBase
 	{
 
-		private readonly PositionReportBA _positionReportBA;
+		private readonly IPositionReportDA _positionReportBA;
 
-		public PositionReportController(PositionReportBA positionReportBA)
+		public PositionReportController(IPositionReportDA positionReportBA)
         {
 			_positionReportBA = positionReportBA;
         }

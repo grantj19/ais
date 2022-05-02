@@ -2,14 +2,15 @@
 using MySql.Data.MySqlClient;
 using AISapi.Models;
 using AISapi.Utilities;
+using AISapi.DA.Interfaces;
 
-namespace AISapi.BA
+namespace AISapi.DA
 {
-	public class PositionReportBA
+	public class PositionReportDA : IPositionReportDA
 	{
 		private readonly MySqlConnection _connection;
 
-		public PositionReportBA(MySqlConnection connection)
+		public PositionReportDA(MySqlConnection connection)
 		{
 			_connection = connection;
 		}
@@ -77,7 +78,7 @@ namespace AISapi.BA
             }
         }
 
-        public async Task<Tuple<PositionReport, string>> GetPositionByMMSIAsync(int MMSI)
+        public async Task<Tuple<PositionReport, string>> GetPositionByMMSIAsync(int? MMSI)
         {
 
             await _connection.OpenAsync();

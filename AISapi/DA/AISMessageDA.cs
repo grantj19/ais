@@ -1,66 +1,22 @@
 ﻿using System.Data;
-using AISapi.BA.Interfaces;
+using AISapi.DA.Interfaces;
 using AISapi.Models;
 using AISapi.Models.Requests;
 using AISapi.Utilities;
 using MySql.Data.MySqlClient;
 
-namespace AISapi.BA
+namespace AISapi.DA
 {
-	public class AISMessageBA : IAISMessageBA
+	public class AISMessageDA : IAISMessageDA
 	{
 		private readonly MySqlConnection _connection;
-        private readonly VesselBA _vesselBA;
+        private readonly IVesselDA _vesselBA;
 
-        public AISMessageBA(MySqlConnection connection, VesselBA vesselBA)
+        public AISMessageDA(MySqlConnection connection, IVesselDA vesselBA)
 		{
 			_connection = connection;
             _vesselBA = vesselBA;
 		}
-
-        public async Task<Tuple<AISMessage, string>> GetAISMessagesByIdAsync(int messageId)
-        {
-            try
-            {
-                await _connection.OpenAsync();
-
-                var message = new AISMessage();
-
-                var query = "SELECT * FROM AIS_MESSAGE" +
-                    " WHERE Id = @Id";
-
-                var command = new MySqlCommand(query, _connection);
-
-                command.Parameters.AddWithValue("@Id", messageId);
-
-                var results = command.ExecuteReaderAsync().Result;
-
-                if (await results.ReadAsync())
-                {
-                    message = new AISMessage
-                    {
-                        Id = results.GetInt32(0),
-                        Timestamp = results.GetDateTime(1),
-                        MMSI = results.GetInt32(2),
-                        Class = results.GetString(3),
-                        Vessel_IMO = results.IsDBNull(4) ? null : results.GetInt32(4)
-                    };  
-                }
-                    
-
-                return new Tuple<AISMessage, string>(message, string.Empty);
-
-            }
-            catch (Exception ex)
-            {
-                return new Tuple<AISMessage, string>(new AISMessage(), ex.ToString());
-            }
-            finally
-            {
-                await _connection.CloseAsync();
-            }
-
-        }
 
         public async Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request)
         {
@@ -125,7 +81,8 @@ namespace AISapi.BA
                 }
 
 
-                var query = "INSERT INTO AIS_MESSAGE (Timestamp, MMSI, Class, Vessel_IMO, MessageType) VALUES (@Timestamp, @MMSI, @Class, @Vessel_IMO, @MessageType)";
+                var query = "INSERT INTO AIS_MESSAGE (Timestamp, MMSI, Class, Vessel_IMO, MessageType) " +
+                    "VALUES (@Timestamp, @MMSI, @Class, @Vessel_IMO, @MessageType)";
 
                 command.CommandText = query;
 

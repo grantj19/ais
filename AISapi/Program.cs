@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
-using AISapi.BA;
-using AISapi.BA.Interfaces;
+using AISapi.DA;
+using AISapi.DA.Interfaces;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using MySql.Data.MySqlClient;
@@ -12,9 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json");
 
 builder.Services.AddTransient<MySqlConnection>(_ => new MySqlConnection(builder.Configuration.GetConnectionString("Default")));
-builder.Services.AddScoped<VesselBA>();
-builder.Services.AddScoped<IAISMessageBA, AISMessageBA>();
-builder.Services.AddScoped<PositionReportBA>();
+builder.Services.AddScoped<IVesselDA, VesselBA>();
+builder.Services.AddScoped<IAISMessageDA, AISMessageDA>();
+builder.Services.AddScoped<PositionReportDA>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
