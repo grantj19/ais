@@ -62,7 +62,6 @@ namespace AISapi.BA
 
         }
 
-
         public async Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request)
         {
             var recordsInserted = 0;
@@ -234,6 +233,39 @@ namespace AISapi.BA
             finally
             {
                 await command.DisposeAsync();
+            }
+        }
+
+        public async Task<Tuple<int, string>> DeleteAISMessageAsync(DateTime timestamp = default)
+        {
+            await _connection.OpenAsync();
+            var command = _connection.CreateCommand();
+
+            try
+            {
+
+                var query = "DELETE FROM AIS_MESSAGE WHERE Timestamp < @Date - INTERVAL 5 MINUTE";
+
+                command.CommandText = query;
+
+                if (timestamp == default)
+                    timestamp = DateTime.UtcNow;
+
+                command.Parameters.AddWithValue("@Date", timestamp);
+
+                var result = await command.ExecuteNonQueryAsync();
+
+                return new Tuple<int, string>(result, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new Tuple<int, string>(new int(), ex.Message);
+            }
+            finally
+            {
+                await command.DisposeAsync();
+                await _connection.CloseAsync();
             }
         }
 

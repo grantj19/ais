@@ -63,6 +63,19 @@ namespace AISapi.Controllers
 				return CreatedAtAction(nameof(Insert), 1);
 			return BadRequest(0);
 		}
+
+		/// <summary> Delete AIS Messages older than 5 minutes </summary>
+		/// <returns>Number of deleted messages</returns>
+		/// <response code="204">Returns number of deleted AIS Messages</response>
+		[HttpDelete]
+		public async Task<IActionResult> Delete(DateTime timestamp = default)
+		{
+			(int recordsDeleted, string error) = await _aisMessageBA.DeleteAISMessageAsync(timestamp);
+
+			if (string.IsNullOrEmpty(error))
+				return Ok(recordsDeleted);
+			return BadRequest(error);
+		}
 	}
 }
 
