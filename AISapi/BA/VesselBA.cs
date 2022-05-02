@@ -52,7 +52,7 @@ namespace AISapi.BA
 
         }
 
-        public async Task<Tuple<Vessel, string>> GetVesselByIMOAsync(int IMO, MySqlConnection? connection = default)
+        public async Task<Tuple<Vessel, string>> GetVesselByIMOAsync(int IMO, MySqlConnection? connection = null)
         {
             var closeConnection = false;
 

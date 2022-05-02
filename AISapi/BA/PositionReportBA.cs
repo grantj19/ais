@@ -1,6 +1,7 @@
 ﻿using System;
 using MySql.Data.MySqlClient;
 using AISapi.Models;
+using AISapi.Utilities;
 
 namespace AISapi.BA
 {
@@ -12,6 +13,69 @@ namespace AISapi.BA
 		{
 			_connection = connection;
 		}
+
+        public async Task<Tuple<List<PositionReport>, string>> GetPositionReport(MySqlConnection? connection = null)
+        {
+            var closeConnection = false;
+
+            if (connection is null)
+            {
+                connection = _connection;
+                await connection.OpenAsync();
+                closeConnection = true;
+            }
+
+            var command = new MySqlCommand
+            {
+                Connection = _connection
+            };
+
+            var positionReports = new List<PositionReport>();
+
+            try
+            {
+                var query = "SELECT * FROM POSITION_REPORT";
+
+                command.CommandText = query;
+
+                var result = await command.ExecuteReaderAsync();
+
+                while (await result.ReadAsync())
+                {
+                    var positionReport = new PositionReport
+
+                    {
+                        Id = result.GetInt32(0),
+                        NavigationalStatus = result.IsDBNull(1) ? null : result.GetString(1),
+                        Longitude = result.IsDBNull(2) ? null : result.GetFloat(2),
+                        Latitude = result.IsDBNull(3) ? null : result.GetFloat(3),
+                        RoT = result.IsDBNull(4) ? null : result.GetDouble(4),
+                        SoG = result.IsDBNull(5) ? null : result.GetDouble(5),
+                        CoG = result.IsDBNull(6) ? null : result.GetDouble(6),
+                        Heading = result.IsDBNull(7) ? null : result.GetInt32(7),
+                        LastStaticDataId = result.IsDBNull(8) ? null : result.GetInt32(8)
+
+                    };
+
+                    positionReports.Add(positionReport);
+                }
+
+                await result.DisposeAsync();
+
+                return new Tuple<List<PositionReport>, string>(positionReports, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return new Tuple<List<PositionReport>, string>(new List<PositionReport>(), ex.Message);
+            }
+            finally
+            {
+                await command.DisposeAsync();
+
+                if (closeConnection)
+                    await _connection.CloseAsync();
+            }
+        }
 
         public async Task<Tuple<PositionReport, string>> GetPositionByMMSIAsync(int MMSI)
         {
@@ -27,7 +91,12 @@ namespace AISapi.BA
 
             try
             {
-                var query = "SELECT a.MMSI, a.Vessel_IMO, p.Latitude, p.Longitude FROM AIS_Message a JOIN POSITION_REPORT p ON p.AISMessage_Id = a.Id WHERE a.MMSI = @MMSI ORDER BY a.Timestamp DESC LIMIT 1";
+                (List<PositionReport> currentPositions, string error) = await GetPositionReport(_connection);
+
+                var query = "SELECT a.* FROM ais_message a " +
+                    "INNER JOIN (SELECT mmsi, MAX(id) as id " +
+                    "FROM ais_message WHERE mmsi = @MMSI) AS b " +
+                    "ON a.mmsi = b.mmsi AND a.id = b.id; ";
 
                 command.CommandText = query;
 
@@ -37,13 +106,17 @@ namespace AISapi.BA
 
                 if (await result.ReadAsync())
                 {
-                    positionReport = new PositionReport
+                    var currentId = result.GetInt32(0);
+                    var currentLat = currentPositions.Where(p => p.Id == currentId).Select(p => p.Latitude).FirstOrDefault();
+                    var currentLong = currentPositions.Where(p => p.Id == currentId).Select(p => p.Longitude).FirstOrDefault();
 
+                    positionReport = new PositionReport
                     {
-                        MMSI = result.IsDBNull(0) ? null : result.GetInt32(0),
-                        Vessel_IMO = result.IsDBNull(1) ? null : result.GetInt32(1),
-                        Latitude = result.IsDBNull(2) ? null : result.GetDouble(2),
-                        Longitude = result.IsDBNull(3) ? null : result.GetDouble(3),
+                        Vessel_IMO = result.IsDBNull(4) ? null : result.GetInt32(4),
+                        MMSI = result.IsDBNull(2) ? null : result.GetInt32(2),
+                        Latitude = currentLat,
+                        Longitude = currentLong
+
                     };
                 }
 
@@ -76,7 +149,12 @@ namespace AISapi.BA
 
             try
             {
-                var query = "SELECT a.Vessel_IMO, a.MMSI, p.Latitude, p.Longitude FROM ais_message AS a JOIN position_report p on p.aismessage_id = a.id WHERE(a.MMSI, a.Id) IN(SELECT MMSI, MIN(Id) FROM ais_message GROUP BY MMSI)";
+                (List<PositionReport> currentPositions, string error) = await GetPositionReport(_connection);
+
+                var query = "SELECT a.* FROM ais_message a " +
+                    "INNER JOIN (SELECT mmsi, MAX(id) as id " +
+                    "FROM ais_message GROUP BY mmsi) AS b " +
+                    "ON a.mmsi = b.mmsi AND a.id = b.id; ";
 
                 command.CommandText = query;
 
@@ -84,12 +162,17 @@ namespace AISapi.BA
 
                 while (await result.ReadAsync())
                 {
+                    var currentId = result.GetInt32(0);
+                    var currentLat = currentPositions.Where(p => p.Id == currentId).Select(p => p.Latitude).FirstOrDefault();
+                    var currentLong = currentPositions.Where(p => p.Id == currentId).Select(p => p.Longitude).FirstOrDefault();
+
                     var positionReport = new PositionReport
                     {
-                        Vessel_IMO = result.IsDBNull(0) ? null : result.GetInt32(0),
-                        MMSI = result.IsDBNull(1) ? null : result.GetInt32(1),
-                        Latitude = result.IsDBNull(2) ? null : result.GetDouble(2),
-                        Longitude = result.IsDBNull(3) ? null : result.GetDouble(3),
+                        Vessel_IMO = result.IsDBNull(4) ? null : result.GetInt32(4),
+                        MMSI = result.IsDBNull(2) ? null : result.GetInt32(2),
+                        Latitude = currentLat,
+                        Longitude = currentLong
+
                     };
 
                     positionReports.Add(positionReport);
