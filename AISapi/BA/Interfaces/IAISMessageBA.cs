@@ -8,6 +8,7 @@ namespace AISapi.BA.Interfaces
 	{
 		Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request);
 		Task<Tuple<AISMessage, string>> GetAISMessagesByIdAsync(int messageId);
+		Task<Tuple<int, string>> DeleteAISMessageAsync(DateTime timestamp = default);
 	}
 }
 
