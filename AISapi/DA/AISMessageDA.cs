@@ -18,6 +18,60 @@ namespace AISapi.DA
             _vesselDA = vesselDA;
 		}
 
+        // Receive the AIS message matching a specific message ID.
+        // Paramters: The AIS message ID, an int, supplied by the user.
+        // Return: A tuple, consisting of:
+        //      -An AIS message object
+        //      -An error message string
+        public async Task<Tuple<AISMessage, string>> GetAISMessagesByIdAsync(int messageId)
+        {
+            try
+            {
+                await _connection.OpenAsync();
+
+                var message = new AISMessage();
+
+                var query = "SELECT * FROM AIS_MESSAGE" +
+                    " WHERE Id = @Id";
+
+                var command = new MySqlCommand(query, _connection);
+
+                command.Parameters.AddWithValue("@Id", messageId);
+
+                var results = command.ExecuteReaderAsync().Result;
+
+                if (await results.ReadAsync())
+                {
+                    message = new AISMessage
+                    {
+                        Id = results.GetInt32(0),
+                        Timestamp = results.GetDateTime(1),
+                        MMSI = results.GetInt32(2),
+                        Class = results.GetString(3),
+                        Vessel_IMO = results.IsDBNull(4) ? null : results.GetInt32(4)
+                    };  
+                }
+                    
+
+                return new Tuple<AISMessage, string>(message, string.Empty);
+
+            }
+            catch (Exception ex)
+            {
+                return new Tuple<AISMessage, string>(new AISMessage(), ex.ToString());
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
+
+        }
+
+        // Insert a batch of AIS messages into the database.
+        // Parameters: An AIS message insert request object, holding all attributes for an AIS message
+        // Return:
+        //      -An int: the number of records inserted
+        //      -An error message string
         public async Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request)
         {
             var recordsInserted = 0;
@@ -48,7 +102,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 await _transaction.RollbackAsync();
 
                 return new Tuple<int, string>(0, ex.Message);
@@ -60,6 +113,12 @@ namespace AISapi.DA
             }
         }
 
+        // Insert a single AIS message record into the database.
+        // Parameters:
+        //      -An AIS message insert request object
+        //      -A MySql transaction object
+        // Return:
+        //      -An int: 1 if insertion succeeded and 0 if it failed
         private async Task<int> InsertAISMessageAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
             var command = new MySqlCommand
@@ -96,7 +155,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 throw;
             }
             finally
@@ -106,6 +164,11 @@ namespace AISapi.DA
             
         }
 
+        // Insert an AIS message into the database; specifically a position report.
+        // Parameters:
+        //      -An AIS message insert request object
+        //      -A MySql transaction object
+        // Return: Void
         private async Task InsertPositionReportAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
 
@@ -140,7 +203,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 throw;
             }
             finally
@@ -149,6 +211,11 @@ namespace AISapi.DA
             }
         }
 
+        // Insert an AIS message into the database; specifically a static data report.
+        // Parameters:
+        //      -An AIS message insert request object
+        //      -A MySql transaction object
+        // Return: Void
         private async Task InsertStaticDataAsync(AISMessageRequest msg, MySqlTransaction _transaction)
         {
             var command = new MySqlCommand
@@ -184,7 +251,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 throw;
             }
             finally
@@ -193,6 +259,11 @@ namespace AISapi.DA
             }
         }
 
+        // Delete all AIS message records older than 5 minutes from the database.
+        // Parameters: A timestamp, in the format of a datetime. Defaults to current time unless otherwise specified.
+        // Return:
+        //      -An int: The number of records deleted
+        //      -An error message string
         public async Task<Tuple<int, string>> DeleteAISMessageAsync(DateTime timestamp = default)
         {
             await _connection.OpenAsync();
@@ -216,7 +287,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return new Tuple<int, string>(new int(), ex.Message);
             }
             finally
@@ -226,6 +296,9 @@ namespace AISapi.DA
             }
         }
 
+        // Obtain the destination port ID for an inserted static data message.
+        // Parameters: The name of the destination port.
+        // Return: The port ID (an int), or "null" on failure
         private async Task<int?> GetDestinationPortIdAsync(string destination)
         {
             try
@@ -250,11 +323,16 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return null;
             }
         }
 
+        // Get the AIS message ID of the message that is being inserted
+        // Parameters:
+        //      -The MMSI, an int, obtained from the user
+        //      -The message type
+        // Return:
+        //      -The message ID (an int)
         private async Task<int> GetAISMessageIdAsync(int mmsi, string messageType)
         {
             var command = _connection.CreateCommand();
@@ -279,7 +357,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return new int();
             }
             finally
@@ -288,6 +365,9 @@ namespace AISapi.DA
             }
         }
 
+        // Obtain the ID of the last static data message sent out for a given position report's vessel
+        // Parameters: The position report's AIS message ID (an int)
+        // Return: The ID of the last static data message associated with the corresponding vessel (an int)
         private async Task<int?> GetLastStaticDataIdAsync(int aisMessageId)
         {
             var command = _connection.CreateCommand();
@@ -316,7 +396,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return null;
             }
             finally

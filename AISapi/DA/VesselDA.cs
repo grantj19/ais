@@ -14,6 +14,11 @@ namespace AISapi.DA
 			_connection = connection;
         }
 
+        // Receive information on all vessels in the database.
+        // Paramteters: None.
+        // Return: A tuple consisting of:
+        //     -A list of vessel objects, containing all related attributes
+        //     -An error message string 
 		public async Task<Tuple<List<Vessel>, string>> GetVesselsAsync()
         {
             try
@@ -52,6 +57,12 @@ namespace AISapi.DA
 
         }
 
+        // Receive vessel information, given an IMO.
+        // Parameters:
+        //      -The IMO, an int, supplied by the user.
+        //      -A MySql connection object.
+        // Return: A tuple consisting of:
+        //      -A vessel object, containing all related attributes
         public async Task<Tuple<Vessel, string>> GetVesselByIMOAsync(int IMO, MySqlConnection? connection = null)
         {
             var closeConnection = false;
@@ -117,6 +128,12 @@ namespace AISapi.DA
             }
         }
 
+        // Insert a new vessel into the database. Called when inserting an AIS message that refers to a vessel that does not yet exist. 
+        // Parameters:
+        //      -An AIS message request object
+        //      -A MySQL connection object
+        //      -A MySQL transaction object
+        // Return: Void
         public async Task InsertVesselAsync(AISMessageRequest msg, MySqlConnection connection, MySqlTransaction transaction)
         {
             var command = new MySqlCommand
@@ -145,7 +162,6 @@ namespace AISapi.DA
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 throw;
             }
             finally
