@@ -6,19 +6,20 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Threading.Tasks;
-using AISapi.BA;
+using AISapi.DA;
 using AISapi.Models.Requests;
-using AISapi.BA.Interfaces;
+using AISapi.DA.Interfaces;
 
 namespace AISTests.ControllerTests;
 
 public class AISMessageControllerTests
 {
     private readonly Random random = new();
-    private readonly Mock<IAISMessageBA> _baStub = new();
+    private readonly Mock<IAISMessageDA> _daStub = new();
 
+    // Test POST /AISMessage/Batch with array of 5 objects (Success)
     [Fact]
-    public async Task Insert_With5Items_Returns5()
+    public async Task InsertBatch_With5Items_Returns5()
     {
         var items = new AISMessageInsertRequest
         {
@@ -34,32 +35,107 @@ public class AISMessageControllerTests
 
         var response = new Tuple<int, string>(5, string.Empty);
 
-        _baStub.Setup(x => x.InsertAISMessagesAsync(items).Result).Returns(response);
+        _daStub.Setup(x => x.InsertAISMessagesAsync(items).Result).Returns(response);
 
-        var controller = new AISMessageController(_baStub.Object);
+        var controller = new AISMessageController(_daStub.Object);
 
         var result = await controller.InsertBatch(items);
+        var resultObj = result as CreatedAtActionResult;
+
+        Assert.Equal(5, resultObj?.Value);
+        Assert.Equal(201, resultObj?.StatusCode);
+    }
+
+    // Test POST /AISMessage/Batch with error
+    [Fact]
+    public async Task InsertBatch_WithError_ReturnsBadRequest()
+    {
+        var items = new AISMessageInsertRequest();
+
+        var response = new Tuple<int, string>(new int(), "Some Error");
+
+        _daStub.Setup(x => x.InsertAISMessagesAsync(items).Result).Returns(response);
+
+        var controller = new AISMessageController(_daStub.Object);
+
+        var result = await controller.InsertBatch(items);
+        var resultObj = result as BadRequestObjectResult;
+
+        Assert.Equal("Some Error", resultObj?.Value);
+        Assert.Equal(400, resultObj?.StatusCode);
+    }
+
+    // Test POST /AISMessage with 1 object (Success)
+    [Fact]
+    public async Task Insert_With1Item_Returns1()
+    {
+        var items = CreateRandomAISMessageRequest();
+
+        var response = new Tuple<int, string>(1, string.Empty);
+
+        _daStub.Setup(x => x.InsertAISMessagesAsync(It.IsAny<AISMessageInsertRequest>()).Result).Returns(response);
+
+        var controller = new AISMessageController(_daStub.Object);
+
+        var result = await controller.Insert(items);
+        var resultObj = result as CreatedAtActionResult;
+
+        Assert.Equal(1, resultObj?.Value);
+        Assert.Equal(201, resultObj?.StatusCode);
+    }
+
+    // Test POST /AISMessage with error
+    [Fact]
+    public async Task Insert_WithError_Returns0()
+    {
+        var items = new AISMessageRequest();
+
+        var response = new Tuple<int, string>(new int(), "Some Error");
+
+        _daStub.Setup(x => x.InsertAISMessagesAsync(It.IsAny<AISMessageInsertRequest>()).Result).Returns(response);
+
+        var controller = new AISMessageController(_daStub.Object);
+
+        var result = await controller.Insert(items);
+        var resultObj = result as BadRequestObjectResult;
+
+        Assert.Equal(0, resultObj?.Value);
+        Assert.Equal(400, resultObj?.StatusCode);
+    }
+
+    // Test DELETE /AISMessage with 5 deletions (Success)
+    [Fact]
+    public async Task Delete_With5Items_Returns5()
+    {
+
+        var response = new Tuple<int, string>(5, string.Empty);
+
+        _daStub.Setup(x => x.DeleteAISMessageAsync(new DateTime()).Result).Returns(response);
+
+        var controller = new AISMessageController(_daStub.Object);
+
+        var result = await controller.Delete();
         var resultObj = result as OkObjectResult;
 
         Assert.Equal(5, resultObj?.Value);
         Assert.Equal(200, resultObj?.StatusCode);
     }
 
+    // Test DELETE /AISMessage with error 
     [Fact]
-    public async Task Get_WithNoItems_ReturnsNotFound()
+    public async Task Delete_WithError_ReturnsBadRequest()
     {
-        Mock<VesselBA> baStub = new();
-        var items = new Tuple<List<Vessel>, string>(new List<Vessel>(), string.Empty);
+        var response = new Tuple<int, string>(new int(), "Some Error");
 
-        baStub.Setup(v => v.GetVesselsAsync()).ReturnsAsync(items);
+        _daStub.Setup(x => x.DeleteAISMessageAsync(new DateTime()).Result).Returns(response);
 
-        var controller = new VesselController(baStub.Object);
+        var controller = new AISMessageController(_daStub.Object);
 
-        var result = await controller.Get();
-        var notFoundResult = result as NotFoundObjectResult;
+        var result = await controller.Delete();
+        var resultObj = result as BadRequestObjectResult;
 
-        Assert.NotNull(notFoundResult);
-        Assert.Equal(404, notFoundResult.StatusCode);
+        Assert.Equal("Some Error", resultObj?.Value);
+        Assert.Equal(400, resultObj?.StatusCode);
     }
 
     private AISMessageRequest CreateRandomAISMessageRequest()

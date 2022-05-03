@@ -1,5 +1,5 @@
-﻿using AISapi.BA;
-using AISapi.BA.Interfaces;
+﻿using AISapi.DA;
+using AISapi.DA.Interfaces;
 using AISapi.Models;
 using AISapi.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
@@ -10,21 +10,11 @@ namespace AISapi.Controllers
 	[Route("[controller]")]
 	public class AISMessageController : ControllerBase
 	{
-		private readonly IAISMessageBA _aisMessageBA;
+		private readonly IAISMessageDA _aisMessageDA;
 
-		public AISMessageController(IAISMessageBA aisMessageBA)
+		public AISMessageController(IAISMessageDA aisMessageDA)
 		{
-			_aisMessageBA = aisMessageBA;
-		}
-
-		[HttpGet]
-		public async Task<IActionResult> Get(int messageId)
-		{
-			(AISMessage message, string error) = await _aisMessageBA.GetAISMessagesByIdAsync(messageId);
-
-			if (string.IsNullOrEmpty(error))
-				return Ok(message);
-			return BadRequest(error);
+			_aisMessageDA = aisMessageDA;
 		}
 
 		/// <summary> Insert Batch of AIS Messages </summary>
@@ -36,7 +26,7 @@ namespace AISapi.Controllers
 		[Route("Batch")]
 		public async Task<IActionResult> InsertBatch(AISMessageInsertRequest request)
         {
-			(int recordsInserted, string error) = await _aisMessageBA.InsertAISMessagesAsync(request);
+			(int recordsInserted, string error) = await _aisMessageDA.InsertAISMessagesAsync(request);
 
 			if (string.IsNullOrEmpty(error))
 				return CreatedAtAction(nameof(InsertBatch), recordsInserted);
@@ -51,7 +41,7 @@ namespace AISapi.Controllers
 		[HttpPost]
 		public async Task<IActionResult> Insert(AISMessageRequest request)
 		{
-			(_ , string error) = await _aisMessageBA.InsertAISMessagesAsync(new AISMessageInsertRequest
+			(int recordsInserted , string error) = await _aisMessageDA.InsertAISMessagesAsync(new AISMessageInsertRequest
 			{
 				AISMessages = new List<AISMessageRequest>
                 {
@@ -60,7 +50,7 @@ namespace AISapi.Controllers
 			});
 
 			if (string.IsNullOrEmpty(error))
-				return CreatedAtAction(nameof(Insert), 1);
+				return CreatedAtAction(nameof(Insert), recordsInserted);
 			return BadRequest(0);
 		}
 
@@ -70,7 +60,7 @@ namespace AISapi.Controllers
 		[HttpDelete]
 		public async Task<IActionResult> Delete(DateTime timestamp = default)
 		{
-			(int recordsDeleted, string error) = await _aisMessageBA.DeleteAISMessageAsync(timestamp);
+			(int recordsDeleted, string error) = await _aisMessageDA.DeleteAISMessageAsync(timestamp);
 
 			if (string.IsNullOrEmpty(error))
 				return Ok(recordsDeleted);
