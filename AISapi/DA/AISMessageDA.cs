@@ -10,12 +10,12 @@ namespace AISapi.DA
 	public class AISMessageDA : IAISMessageDA
 	{
 		private readonly MySqlConnection _connection;
-        private readonly IVesselDA _vesselBA;
+        private readonly IVesselDA _vesselDA;
 
-        public AISMessageDA(MySqlConnection connection, IVesselDA vesselBA)
+        public AISMessageDA(MySqlConnection connection, IVesselDA vesselDA)
 		{
 			_connection = connection;
-            _vesselBA = vesselBA;
+            _vesselDA = vesselDA;
 		}
 
         public async Task<Tuple<int, string>> InsertAISMessagesAsync(AISMessageInsertRequest request)
@@ -74,10 +74,10 @@ namespace AISapi.DA
 
                 if (vesselIMO is not null)
                 {
-                    (Vessel existingVessel, string error) = (Tuple<Vessel, string>)await _vesselBA.GetVesselByIMOAsync(vesselIMO, _connection);
+                    (Vessel existingVessel, string error) = (Tuple<Vessel, string>)await _vesselDA.GetVesselByIMOAsync(vesselIMO, _connection);
 
                     if (existingVessel.IMO is null)
-                        await _vesselBA.InsertVesselAsync(msg, _connection, _transaction);
+                        await _vesselDA.InsertVesselAsync(msg, _connection, _transaction);
                 }
 
 

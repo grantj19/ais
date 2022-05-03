@@ -12,9 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json");
 
 builder.Services.AddTransient<MySqlConnection>(_ => new MySqlConnection(builder.Configuration.GetConnectionString("Default")));
-builder.Services.AddScoped<IVesselDA, VesselBA>();
+builder.Services.AddScoped<IVesselDA, VesselDA>();
 builder.Services.AddScoped<IAISMessageDA, AISMessageDA>();
-builder.Services.AddScoped<PositionReportDA>();
+builder.Services.AddScoped<IPositionReportDA, PositionReportDA>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {

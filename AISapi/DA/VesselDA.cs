@@ -5,11 +5,11 @@ using MySql.Data.MySqlClient;
 
 namespace AISapi.DA
 {
-    public class VesselBA : IVesselDA
+    public class VesselDA : IVesselDA
 	{
 		private readonly MySqlConnection _connection;
 
-		public VesselBA(MySqlConnection connection)
+		public VesselDA(MySqlConnection connection)
         {
 			_connection = connection;
         }

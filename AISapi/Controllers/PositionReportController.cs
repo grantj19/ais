@@ -11,11 +11,11 @@ namespace AISapi.Controllers
 	public class PositionReportController : ControllerBase
 	{
 
-		private readonly IPositionReportDA _positionReportBA;
+		private readonly IPositionReportDA _positionReportDA;
 
 		public PositionReportController(IPositionReportDA positionReportBA)
         {
-			_positionReportBA = positionReportBA;
+			_positionReportDA = positionReportBA;
         }
 
 		/// <summary> Get all most recent ship positions </summary>
@@ -38,7 +38,7 @@ namespace AISapi.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Get()
         {
-			(List<PositionReport> reports, string error) = await _positionReportBA.GetRecentPositionsAsync();
+			(List<PositionReport> reports, string error) = await _positionReportDA.GetRecentPositionsAsync();
 
 			if (string.IsNullOrEmpty(error))
 				return Ok(reports);
@@ -66,7 +66,7 @@ namespace AISapi.Controllers
 		[Route("GetByMMSI")]
 		public async Task<IActionResult> GetByMMSI(int MMSI)
 		{
-			(PositionReport report, string error) = await _positionReportBA.GetPositionByMMSIAsync(MMSI);
+			(PositionReport report, string error) = await _positionReportDA.GetPositionByMMSIAsync(MMSI);
 
 			if (string.IsNullOrEmpty(error))
 				return Ok(report);
