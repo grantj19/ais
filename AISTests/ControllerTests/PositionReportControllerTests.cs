@@ -15,6 +15,7 @@ namespace AISTests.ControllerTests
         private readonly Random random = new();
 		private readonly Mock<IPositionReportDA> _daStub = new();
 
+        // Test GET /PositionReport with success
         [Fact]
         public async Task GetPositionReports_WithNoError_ReturnsOK()
         {
@@ -33,6 +34,7 @@ namespace AISTests.ControllerTests
             Assert.Equal(200, resultObj?.StatusCode);
         }
 
+        // Test GET /PositionReport with error
         [Fact]
         public async Task GetPositionReports_WithError_ReturnsBadRequest()
         {
@@ -50,6 +52,9 @@ namespace AISTests.ControllerTests
             Assert.Equal(400, resultObj?.StatusCode);
         }
 
+        // Test GET /PositionReport/GetByMMSI with success
+        // This test is giving a null reference error, which is very confusing
+        // since the version of this test that returns an error is passing
         [Fact]
         public async Task GetPositionReportsByMMSI_WithNoError_ReturnsOK()
         {
@@ -68,6 +73,7 @@ namespace AISTests.ControllerTests
             Assert.Equal(200, resultObj?.StatusCode);
         }
 
+        // Test GET /PositionReport/GetByMMSI with error
         [Fact]
         public async Task GetPositionReportsByMMSI_WithError_ReturnsBadRequest()
         {

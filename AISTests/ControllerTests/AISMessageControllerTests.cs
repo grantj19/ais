@@ -17,6 +17,7 @@ public class AISMessageControllerTests
     private readonly Random random = new();
     private readonly Mock<IAISMessageDA> _daStub = new();
 
+    // Test POST /AISMessage/Batch with array of 5 objects (Success)
     [Fact]
     public async Task InsertBatch_With5Items_Returns5()
     {
@@ -45,6 +46,7 @@ public class AISMessageControllerTests
         Assert.Equal(201, resultObj?.StatusCode);
     }
 
+    // Test POST /AISMessage/Batch with error
     [Fact]
     public async Task InsertBatch_WithError_ReturnsBadRequest()
     {
@@ -63,6 +65,7 @@ public class AISMessageControllerTests
         Assert.Equal(400, resultObj?.StatusCode);
     }
 
+    // Test POST /AISMessage with 1 object (Success)
     [Fact]
     public async Task Insert_With1Item_Returns1()
     {
@@ -81,6 +84,7 @@ public class AISMessageControllerTests
         Assert.Equal(201, resultObj?.StatusCode);
     }
 
+    // Test POST /AISMessage with error
     [Fact]
     public async Task Insert_WithError_Returns0()
     {
@@ -99,6 +103,7 @@ public class AISMessageControllerTests
         Assert.Equal(400, resultObj?.StatusCode);
     }
 
+    // Test DELETE /AISMessage with 5 deletions (Success)
     [Fact]
     public async Task Delete_With5Items_Returns5()
     {
@@ -116,6 +121,7 @@ public class AISMessageControllerTests
         Assert.Equal(200, resultObj?.StatusCode);
     }
 
+    // Test DELETE /AISMessage with error 
     [Fact]
     public async Task Delete_WithError_ReturnsBadRequest()
     {
